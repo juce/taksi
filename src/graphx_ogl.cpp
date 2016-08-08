@@ -635,7 +635,8 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 	// if haven't done yet, query for version info and extensions
 	if (!hasOpenGLInfo) GetVersionAndExtensionsInfo();
 
-	if (hProcWnd == NULL) GetWindowInfoAndDims();
+    // safer to do it every time, in case windows/screen modes change
+	GetWindowInfoAndDims();
 
 	// determine how we are going to handle keyboard hot-keys:
 	// Use DirectInput, if configured so, 

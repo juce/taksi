@@ -1,16 +1,16 @@
 INC=\DXSDK9\Include
 STL=\STL
 CC=cl
-CFLAGS=/nologo /DMYDLL_RELEASE_BUILD -GX
+CFLAGS=/nologo $(EXTRA_CFLAGS) -EHsc
 LINK=link
 LFLAGS=/NOLOGO /LIBPATH:\DXSDK9\Lib
 LIBS=user32.lib dinput8.lib dxguid.lib gdi32.lib
 
 all: taksi.dll taksi.exe
 release:
-	$(MAKE) EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
+	$(MAKE) EXTRA_CFLAGS="/DMYDLL_RELEASE_BUILD"
 perf:
-	$(MAKE) EXTRA_CFLAGS=/DMYDLL_CLOCK_STATS
+	$(MAKE) EXTRA_CFLAGS="/DMYDLL_CLOCK_STATS"
 
 taksi.exe: hook.obj win32gui.obj config.obj det_dx8.obj det_dx9.obj hook.res taksi.dll
 	$(LINK) $(LFLAGS) /out:taksi.exe hook.obj win32gui.obj config.obj det_dx8.obj det_dx9.obj taksi.lib hook.res $(LIBS)
