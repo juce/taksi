@@ -1,0 +1,229 @@
+TAKSI manual v0.5                                            November 18, 2004
+==============================================================================
+
+
+0. About:
+---------
+Taksi is a screenshot/video-capture program for 3D applications (games, and 
+etc.) Currently, it works with DirectX 8, DirectX 9, and OpenGL applications.
+(Support for older DirectX interfaces may be implemented in the future)
+Taksi is free software.
+
+
+1. Current state / What's new:
+------------------------------
+BETA. DirectX 8 / DirectX 9 / OpenGL support implemented.
+This is a "bug-fixing/internal enhancements" release. Changes made include:
+
+New in 0.5:
+- slight modification of DLL-mapping/hooking algorithm. Now hooks more
+reliably. Also, is now able to re-map into the application, after being
+temporarily unmapped (for example: after WarCraft III cinematics)
+- added an option to capture full-size video. 
+This is an experimental feature and it is turned off by default. 
+Be advised that this feature works fine for small-screen windowed apps,
+but doesn't yet provide acceptable performance in games played in 
+full-screen. Also, the hard disk space is consumed 4 times faster
+than during regular half-sized video capture.
+
+
+2. Supported operating systems:
+-------------------------------
+Windows 95, Windows 98, Windows ME,
+Windows NT 4.0, Windows 2000, Windows XP.
+
+
+3. Capture specifications:
+--------------------------
+Screenshot format: 24 bit BMP files.
+Video: uncompressed AVI-files (no audio).
+
+
+4. Games/Apps tested with:
+--------------------------
+Direct3D 8: 
+   Pro Evolution Soccer 3, Winning Eleven 7 International,
+   F1 2001, FIFA 2003, WarCraft III.
+   Unreal Tournament 2003, Unreal Tournament 2004,
+   3DMark2001 SE.
+Direct3D 9:
+   Prince of Persia: Sands of Time,
+   Leisure Suit Larry: Magna Cum Laude,
+   3DMark03.
+OpenGL:
+   DOOM 3, Return To Castle Wolfenstein (demo),
+   Tennis Critters (demo), PyOpenGL bindings.
+
+
+5. Usage:
+---------
+
+STEP 1. Run taksi.exe
+STEP 2. Run a game that uses one of the supported APIs (DX8, DX9 or OpenGL)
+        (The order of these two steps is not important for taksi. It should be
+        able to hook on the game in either case.)
+
+STEP 3. Look at left top corner of the screen. 
+        If you see a green rectangle in there, then Taksi was able
+        to sucessfully hook on the game.
+
+
+6. Default keys:
+----------------
+
+F5: Turn visual indicator ON/OFF.
+F6: Toggle system-wide hook mode. When ON (indicator turns blue), allows 
+     for mapping into multiple applications, but may have a strong negative
+     effect on the overall performance of the system. Recommended state: OFF.
+     (The hot-key is disabled, when Taksi uses DirectInput for keyboard
+     handling.)
+F7: Small screenshot (WIDTH/2 x HEIGHT/2).
+F8: Regular screenshot (WIDTH x HEIGHT).
+ScrollLock: Video capture ON/OFF (Writes an uncompressed AVI-file).
+     (Dimensions of the video are WIDTH/2 x HEIGHT/2.)
+
+
+7. IMPORTANT DISK SPACE CONSIDERATIONS:
+---------------------------------------
+Taksi writes uncompressed AVI files. Basically, this means you need a lot
+of free disk space. (Once captured, the AVI-files can be compressed into
+much smaller files, using the tools like an excellent free software
+program, called VirtualDub by Avery Lee.) However, at the time of
+capture, for performance reasons, no compression is done, which means that
+video files grow large very fast.
+
+There is no time limit in the video capture mode, so the only constraint
+is the available disk space. Keep this in mind, when setting the directory
+for you captured videos.
+
+
+8. Configuration:
+-----------------
+Taksi uses configuration file, called "taksi.cfg". It is optional, so the 
+program can operate without it, using built-in default settings. 
+The configuration file is managed automatically by Taksi (it is read
+on start-up, and updated when "Save And Apply" button is clicked.).
+However, it can be edited manually as well.
+
+The following options exist:
+
+1) Basic capture options:
+=========================
+
+Capture directory ("capture.dir"): 
+This is the directory, where your screenshots and video will be stored. 
+IMPORTANT: This directory must exist before any capture is attempted.
+
+Target frame rate ("movie.frameRate.target"):
+Desired frame rate of the captured video. So-called "Adaptive" algorithm
+uses this setting. When Adaptive algorithm is used, Taksi will try to 
+capture the video that will run at specified frame rate, and appear to 
+be of the same speed as the actual game. 
+NOTE: This doesn't always work well. It seems to work fine for applications
+with high frame rate, but often poorly for low frame rate apps. This
+Adaptive algorithm is still work-in-progress, so hopefully, i'll be able
+to improve it.
+If it fails to deliver decent videos, try using "Custom settings", which
+are described below.
+
+2) Hot-key mappings:
+====================
+Define keys that trigger the actions: screen shot capture, video capture,
+indicator appear/disappear, global hook mode.
+
+NOTE: Sometimes, the hot-keys may be slow to respond, or not-responsive
+at all. First thing to try is to re-assign the hot-keys as they may clash
+with some other actions in the game that are triggered by these keys.
+If that doesn't help, try changing the value for "useDirectInput"
+configuration option, described in the next section.
+
+3) Advanced options:
+====================
+These options you may never need to change. 
+That said, there are certainly use cases, when you might want (or need)
+to modify them.
+
+"startup.hookMode.systemWide" : 0/1
+Takes boolean values, where 0 - means that taksi should go into 
+"exclusive" mode once an application is hooked, effectively meaning that 
+no other application will be hooked until this application exits, or 
+taksi exits and unhooks from it. 1 - means stay in system wide mode, 
+allowing many apps to be hooked in parallel. Typically, you would
+want Taksi to go to exclusive mode as soon as possible, because
+system-wide mode requires extra message processing by the OS, and
+may slow down the whole system. However, system-wide mode is useful 
+when you want to run many windowed apps at the same time and hook them 
+all with Taksi. (Remember that HOOK_MODE hot-key can still be used from 
+any of those applications to switch back-and-forth between the modes)
+Recommended default: 0
+
+"keyboard.useDirectInput" : 0/1
+Takes boolean values. Allows to pick one of two methods of handling 
+hot-keys: either through a keyboard hook procedure (value 0), or by 
+using DirectInput interface from DirectX 8 API (value 1). Typically
+you would want to use DirectInput, because it allows to correctly
+handle hot-keys across wider range of applications. In fact, for 
+some apps (like 3DMark2001 SE), using DirectInput may be the only way
+to capture hot-key toggles. Using keyboard hook can be a better 
+alternative when you want to hook multiple applications at the same
+time (i.e. "system-wide" mode), and want to send hot-key commands
+separately to each application: in other words, the one with
+keyboard focus will receive the hot-key toggles, but others will not.
+(When DirectInput is used, all hooked apps will receive and process
+the hot-key events simultaneously, which may not be desirable).
+Recommended default: 1
+
+"movie.fullSize" : 0/1
+Takes boolean values. Allows to capture video in either "half-size"
+mode, when frames are reduced by half in each dimension, or in 
+"full-size" mode, when frames are kept as they are in the game.
+Warning: performance issues exist with full-size video capture, if 
+used in high-resolution modes (1024x768 and higher). Use it only 
+if you really need to, and you have a very fast graphics card, and
+you have tons of hard drive space.
+Recommended default: 0
+
+NOTE: There is no way to modify the values of these settings via GUI,
+so in order to make a change, you need to manually edit the config file
+(using any text editor), and then restart Taksi.
+
+4) Custom video settings:
+=========================
+This is the alternative to Adaptive mode.
+Custom settings come in groups, with each group having a unique id. 
+There are 3 settings in a group: pattern, frame rate, and frame weight.
+Pattern allows you to select which application(s) should be handled by
+this custom settings group. When taksi.dll is mapped into an application,
+it checks if any part of applications's full executable filename matches
+the pattern of any group. Usually, you can just specify the name of
+the game's main executable file, but sometimes you may wish to be more
+or less specific. Frame rate is the frame rate of captured video.
+Frame Weight specifies how much each game frame should contribute to
+captured video frame. 
+Examples of weight setting:
+1.0  - every frame of the game will be captured in the video. 
+4.0  - every frame of the game will be duplicated 4 times in the 
+       captured video. (You rarely would wanna use something like 
+	   that though). 
+0.33 - approximately every 3rd frame of the game is captured in the video.
+0.4  - 2 out of 5 frames are captured.
+
+Keep in mind that custom settings may deliver very weird results of
+either very slow or very fast videos. You may need to experiment with 
+the settings. However, i found out that for some applications, good
+custom settings can deliver much better (and smaller) videos than the ones
+captured in Adaptive mode.
+
+
+9. Credits:
+-----------
+Taksi is written by Anton Jouline (Juce)
+
+
+10. License:
+------------
+This program is distributed under BSD-style license.
+See license.txt file for exact information about copying and redistribution.
+
+==============================================================================
+

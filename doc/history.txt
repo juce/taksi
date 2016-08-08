@@ -1,0 +1,248 @@
+NOTE: This file contains chaotic notes taken primarily during the early 
+stages of development. The information here has mostly historic value.
+=======================================================================
+
+
+d3d8.dll base: 00230000
+
+IDirect3DDevice8 vtable (First 20 methods):
+-------------------------------------------
+0013c8a0: vtablePtr[00]: 00280540 - QueryInterface
+0013c8a4: vtablePtr[01]: 002804f0 - AddRef
+0013c8a8: vtablePtr[02]: 00280510 - Release
+0013c8ac: vtablePtr[03]: 00280a40
+0013c8b0: vtablePtr[04]: 00280d60
+0013c8b4: vtablePtr[05]: 002720b0
+0013c8b8: vtablePtr[06]: 00280c30
+0013c8bc: vtablePtr[07]: 00281a00
+0013c8c0: vtablePtr[08]: 00280d00
+0013c8c4: vtablePtr[09]: 00280ca0
+0013c8c8: vtablePtr[10]: 00280730
+0013c8cc: vtablePtr[11]: 002807d0
+0013c8d0: vtablePtr[12]: 00280830
+0013c8d4: vtablePtr[13]: 002805e0
+0013c8d8: vtablePtr[14]: 00281fc0
+0013c8dc: vtablePtr[15]: 002809c0 - Present
+0013c8e0: vtablePtr[16]: 00280940
+0013c8e4: vtablePtr[17]: 00280b40
+0013c8e8: vtablePtr[18]: 002808a0
+0013c8ec: vtablePtr[19]: 002808f0
+
+Algorithm:
+----------
+1. determine d3d8.dll base
+2. create vtable of first 20 methods, using DLL base.
+3. search d3d8 module for this vtable.
+4. in the found vtable, replace Present's address with our function's address.
+5. our function will call Present and do useful stuff.
+
+New info:
+---------
+It appears that d3d8 module contains the vtable in 3 places.
+Present address is located at the following offsets:
+12724  12D14  13894
+
+New info:
+---------
+previous new info is useless. It appears that vtable lives in the heap.
+For example, for CDJuce.exe, it was found in 13c880 (as reported by the prog).
+
+progress:
+--------
+Was able to manually hook Present (via SoftIce). However program crashes.
+If appears that original Present is called correctly, but the crash occurs
+on return statement in JucePresent.
+
+more progress!!!:
+-----------------
+Was able to fix the crashing, by declaring JucePresent as STDMETHODCALLTYPE
+(same as __stdcall)
+
+New info:
+---------
+Windows XP has different "clean" offset for Present(): 0x50980
+(Windows 2000 has: 0x509c0)
+Possibly, each operating system has a different one.
+
+Next thing TODO:
+replace manual hooking with automatic hooking.
+
+*MILESTONE* #1:
+---------------
+Implemented automatic hooking, which finds vtable by searching the process heap.
+Works with PES3 and Direct3D sample applications 
+on Windwows 2000 and Windows XP.
+
+BUG:
+if PES3 is started first in fullscreen mode, then task-switched (Alt-Tab), 
+then hook.exe is started, PES3 cannot restore with Alt-Tab. Hooking appears 
+to be performed correctly though... (according to the log file)
+MORE On THIS: it can be restored with ALt-Enter. WEIRD...
+
+Something fishy about it window resizing/restoration
+If window is resized, programs die.
+
+NOTE:
+-----
+Added correct restoration of original Present(), when dll is detached.
+
+*MILESTONE* #2:
+---------------
+- fixed resizing/restoration problem.
+- added visual indicator.
+PROBLEM:
+some applications fail. This appears to be happenning at the stage
+of heap searching. Probably, because heap space is not contiguous.
+
+#### big MILESTONE ########:
+----------------------------
+All Direct3D 8 apps seem to work now.
+Recent additions/fixes:
+- fixed bugs in JuceReset and JucePresent which were causing Alt-Enter thing with PES3
+- fixed sound problems with PES3, by implementing optimized indicator drawing routine.
+- added keyboard hook and screenshots logic.
+
+Screenshots can be made in fullscreen applications.
+(don't work yet in windowed apps: get black rects as screenshots)
+
+Next TODO:
+~~~~~~~~~~
+* speed-up screenshot taking 
+  (perhaps replace D3DXSaveSurfaceToFile with custom routine)
+* figure out windowed apps
+* fix global hooking/unhooking logic
+* capture video
+
+- fixed windowed apps.
+- added 2 additional screenshot routines (now 3 diff. routines!).
+- added BMP-writing routine.
+- About ready to start writing the AVI file.
+
+*MILESTONE* #4
+--------------
+- added minification procedure.
+- video capturing implemented.
+
+INFO:
+Looks like, "clean" offsets for Present() and Reset() differ from machine to machine.
+A test for 2 Win2K boxes showed 2 different sets of offsets.
+SOLUTION: hook.exe dynamically creates a IDirect3DDevice8, and uses its vtablePtr to
+create a vtableFrag, which contains offsets for Present() and Reset().
+
+#### another big MILESTONE #####:
+---------------------------------
+- hook.exe now dynamically determines offsets of Present() and Reset() and gives that
+information to the DLL. 
+- problem with CopyRects (sound breaking after one use of CopyRects) seems to be fixed
+by installing new video drivers (53.03 from Nvidia)
+- correct unhooking implemented.
+- two modes implemented: "exclusive" and "system-wide".
+"Exclusive" means, after the first DX8 app is found, the system wide hook is removed.
+"System-wide" : the system wide hook stays hooked.
+
+Feb.4,2004
+----------
+Re-implemented indicator drawing routine (idle mode):
+CopyRects is abandoned in favour of Direct3DDevice8 drawing methods. As a result,
+massive speed improvement, which also results in games running much more smoothly. 
+(Probabal explanation is that: CopyRects needed to constantly copy data from 
+system memory to video memory, which was the bottleneck operation.)
+CopyRects is still used for screen grabbinng / video capturing, and seems
+to work just fine in those cases. At the moment, no alternative that would work
+in general cases (such as unlockable backbuffers) has been found.
+
+Feb.6,2004
+----------
+Fixed bug related to new indicator drawing logic: now FIFA2003, F12001,
+PES3, and all Direct3D SDK Samples work fine.
+
+Mar.03,2004
+-----------
+Finished first version of Win32 GUI. Full support for all features,
+including custom settings. Renamed executable, DLL, and configurtion file to
+taxi.exe, taxi.dll, and taxi.cfg respectively. This is the first version ready 
+to be given away for testing/trying.
+
+Mar.10,2004
+-----------
+Renamed to "Taksi". Executable, DLL, and configuration file, as well as
+logfile names are updated accordingly.
+
+May.21,2004
+-----------
+First rough support for Direct3D 9.0 implemented.
+
+May.23,2004
+-----------
+moved API-graphics-specific stuff outside mydll.cpp
+
+May.24,2004
+-----------
+Both DirectX 8 and DirectX 9 are now supported.
+
+Nov.3,2004
+----------
+Added beginnings of OpenGL support: hooking via different methods
+(Import table overwrites, Run-time code modification). Looks like hooking of
+wglSwapBuffers (using "temporary" JMP instruction) is enough for most cases,
+as it works when application uses SwapBuffers, or even GLUT library
+(glutSwapBuffers).
+
+Nov.7,2004
+----------
+Screenshots and video capture implemented for OpenGL apps.
+Support for OpenGL now complete.
+Version 0.3 released.
+
+Nov.10,2004
+-----------
+Re-implemented Present/Reset hooking for DirectX-based games.
+The "JMP-implant" algorithm is now used (same idea as in OpenGL hooking).
+Implemented proper reference counting by hooking AddRef and Release methods
+of IDirect3DDevice9 and IDirect3DDevice9 interfaces. Now all DX9 SDK
+samples exit cleanly, as do Warcraft III, and PES games. 
+Implemented proper release of device resources in the event of device change.
+(As a result, 3DMark2001SE now fully works with Taksi.)
+
+Nov.11,2004
+-----------
+- Cleanup of system-wide/exclusive modes functionality. New configuration
+parameter: "startup.hookMode.systemWide". Takes boolean values (0/1), where
+0 - means that taksi should go into "exclusive" mode once an application is
+hooked, effectively meaning that no other application will be hooked until
+this application exits, or taksi unhooks from it. 1 - means: stay in 
+system wide mode, allowing many apps to be hooked in parallel. (HOOK_MODE
+hot key can still switch between the modes (as before), once the application 
+is hooked by taksi.)
+- Cleanup and fixes for keyboard handling code. "useDirectInput" option
+now has new meaning: always use DirectInput (regardless of what the app
+itself is using). 
+
+Nov.14,2004
+-----------
+- Simplified hooking logic. 3 new threads are no longer created upon the
+mapping of taksi.dll. Instead, the checks for Direct3D8, Direct3D9, and
+OpenGL are done sequentualy. (Also, OpenGL check is now a simple lookup
+using GetProcAddress.) Additional checks for the APIs are triggered by
+GetMsgProc, which ignores non-window-related messages, but does the 
+GetModuleHandle checks when a window-related message (<= 0x24) arrives.
+- Logging from multiple threads is not an issue now.
+
+Nov.16,2004
+===========
+- Yet another modification to DLL-mapping/API-hooking algorithm in
+search of faster and more reliable mapping/hooking. Currently, WH_CBT
+hook is used, and all three DLLs (d3d8.dll, d3d9.dll, opengl32.dll)
+are pre-loaded and modified with JMP-implants. CBTProc is used to
+monitor existence of JMP-implants, which are checked whenever a
+HCBT_SETFOCUS message is received. This seems to work well.
+
+Nov.18,2004
+===========
+- experimental feature: full-size video capture.
+Right now, it's working very well. Very visible slowdown in games,
+and also the actual frame rate of the video is not very good.
+However, this may be useful option for windowed-applications, which
+are running in relatively small windows.
+
+

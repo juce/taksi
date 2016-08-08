@@ -1,0 +1,12 @@
+Random frame writing statistics
+===============================
+
+      CreateImageSurface:      12158        6%
+      CopyRects:              136298       64%
+      LockRect:                   15        0%
+      bit transform:           64655       30%     
+    JuceGetHalfSizeRGB time:  214687
+  GetFrame time:              214741       82%
+  WriteAVIFrame time:          48104       18%
+
+-----> total frame shot time: 262983
