@@ -224,12 +224,6 @@ BOOL ReadConfigFromDir(TAXI_CONFIG* config, char* dir)
 			LOG(log, (log, "ReadConfig: vKeyVideoCapture = 0x%02x\n", value));
 			config->vKeyVideoCapture = value;
 		}
-		else if (lstrcmp(name, "keyboard.useDirectInput")==0)
-		{
-			if (sscanf(pValue, "%d", &value)!=1) continue;
-			LOG(log, (log, "ReadConfig: useDirectInput = %d\n", value));
-			config->useDirectInput = (value != 0);
-		}
 		else if (lstrcmp(name, "startup.hookMode.systemWide")==0)
 		{
 			if (sscanf(pValue, "%d", &value)!=1) continue;
@@ -381,12 +375,6 @@ BOOL WriteConfig(TAXI_CONFIG* config)
 		{
 			fprintf(cfg, "vKey.videoCapture = 0x%02x\n", config->vKeyVideoCapture);
 			bWrittenVKeyVideoCapture = true;
-		}
-		else if ((setting = strstr(line, "keyboard.useDirectInput")) && 
-				 (comment == NULL || setting < comment))
-		{
-			fprintf(cfg, "keyboard.useDirectInput = %d\n", config->useDirectInput ? 1 : 0);
-			bWrittenUseDirectInput = true;
 		}
 		else if ((setting = strstr(line, "startup.hookMode.systemWide")) && 
 				 (comment == NULL || setting < comment))

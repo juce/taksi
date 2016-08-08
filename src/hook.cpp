@@ -122,8 +122,6 @@ void ApplySettings(void)
 	VKEY_TEXT(VKEY_VIDEO_CAPTURE, buf, BUFLEN); 
 	SendMessage(g_keyVideoToggleControl, WM_SETTEXT, 0, (LPARAM)buf);
 
-	// apply useDirectInput
-	SetUseDirectInput(config.useDirectInput);
 	// apply startupModeSystemWide
 	SetStartupModeSystemWide(config.startupModeSystemWide);
 	// apply fullSizeVideo
