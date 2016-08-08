@@ -383,12 +383,12 @@ void DrawIndicator()
 	{
 		GlDisable(GL_TEXTURE_2D);
 	}
-    GlBindTexture(GL_TEXTURE_2D, 0);
-    GlDisable(GL_TEXTURE_2D);
-    GlDisable(GL_TEXTURE_CUBE_MAP);
+    //GlBindTexture(GL_TEXTURE_2D, 0);
+    //GlDisable(GL_TEXTURE_2D);
+    //GlDisable(GL_TEXTURE_CUBE_MAP);
 
 	GlDisable(GL_DEPTH_TEST);
-	GlDisable(GL_STENCIL_TEST);
+	//GlDisable(GL_STENCIL_TEST);
 	GlShadeModel(GL_FLAT);
 
 	// set appropriate color for the indicator
@@ -635,7 +635,7 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 	// if haven't done yet, query for version info and extensions
 	if (!hasOpenGLInfo) GetVersionAndExtensionsInfo();
 
-	if (1)/*hProcWnd == NULL)*/ GetWindowInfoAndDims();
+	if (hProcWnd == NULL) GetWindowInfoAndDims();
 
 	// determine how we are going to handle keyboard hot-keys:
 	// Use DirectInput, if configured so, 
