@@ -17,9 +17,6 @@ using namespace std;
 #include "shared.h"
 #include "config.h"
 #include "log.h"
-#include "dinp.h"
-#include "graphx_dx8.h"
-#include "graphx_dx9.h"
 #include "graphx_ogl.h"
 #include "util.h"
 
@@ -213,8 +210,6 @@ HANDLE videoFile;
 HWND hProcWnd = NULL;
 
 extern HMODULE hDI;
-extern HMODULE hD3D8;
-extern HMODULE hD3D9;
 extern HMODULE hOpenGL;
 
 // information about the process
@@ -791,90 +786,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	{
 		Log("DLL detaching...");
 
-		/* release DirectInput objects */
-		if (hDI != NULL)
-		{
-			CloseDirectInput();
-		}
-
-		if (hD3D8 != NULL)
-		{
-			/* close AVI file, if we were in recording mode */
-			if (g_mystate.bNowRecording)
-			{
-				g_mystate.bNowRecording = false;
-				Log("Recording stopped. (DLL is being unmapped).");
-				CloseAVIFile(videoFile);
-			}
-
-			/* uninstall keyboard hook */
-			UninstallKeyboardHook();
-
-			/* restore original pointers */
-			RestoreDeviceMethods8();
-
-			/* uninstall system-wide hook */
-			if (sg_bHookInstalled)
-			{
-				if (UninstallTheHook())
-				{
-					Log("GetMsgProc succesffully unhooked.");
-				}
-			}
-
-			/* if taksi.exe is still running, tell it to re-install the GetMsgProc hook */
-			if (!sg_bExiting)
-			{
-				PostMessage(sg_hServerWnd, WM_APP_REHOOK, (WPARAM)0, (LPARAM)0);
-				Log("Posted message for server to re-hook GetMsgProc.");
-			}
-
-			/* invalidate all our D3D objects */
-			InvalidateAndDelete8();
-
-			// give graphics module a chance to clean up.
-			GraphicsCleanup8();
-		}
-
-		if (hD3D9 != NULL)
-		{
-			/* close AVI file, if we were in recording mode */
-			if (g_mystate.bNowRecording)
-			{
-				g_mystate.bNowRecording = false;
-				Log("Recording stopped. (DLL is being unmapped).");
-				CloseAVIFile(videoFile);
-			}
-
-			/* uninstall keyboard hook */
-			UninstallKeyboardHook();
-
-			/* restore original pointers */
-			RestoreDeviceMethods9();
-
-			/* uninstall system-wide hook */
-			if (sg_bHookInstalled)
-			{
-				if (UninstallTheHook())
-				{
-					Log("GetMsgProc succesffully unhooked.");
-				}
-			}
-
-			/* if taksi.exe is still running, tell it to re-install the GetMsgProc hook */
-			if (!sg_bExiting)
-			{
-				PostMessage(sg_hServerWnd, WM_APP_REHOOK, (WPARAM)0, (LPARAM)0);
-				Log("Posted message for server to re-hook GetMsgProc.");
-			}
-
-			/* invalidate all our D3D objects */
-			InvalidateAndDelete9();
-
-			// give graphics module a chance to clean up.
-			GraphicsCleanup9();
-		}
-
 		if (hOpenGL != NULL)
 		{
 			/* close AVI file, if we were in recording mode */
@@ -912,8 +823,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		}
 
 		// call FreeLibrary to decrease count
-		if (hD3D8 && g_unloadD8) FreeLibrary(hD3D8);
-		if (hD3D9 && g_unloadD9) FreeLibrary(hD3D9);
 		if (hOpenGL && g_unloadOGL) FreeLibrary(hOpenGL);
 
 		/* close specific log file */
@@ -1045,34 +954,6 @@ EXTERN_C _declspec(dllexport) LRESULT CALLBACK KeyboardProc(int code, WPARAM wPa
  * If so, their corresponding buffer-swapping routines are hooked. */
 void CheckAndHookModules()
 {
-	// Direct3D8
-	if (!g_D8_hooked) 
-	{
-		Log("Checking Direct3D8 usage");
-		hD3D8 = GetModuleHandle("d3d8.dll");
-		if (!hD3D8) 
-		{
-			hD3D8 = LoadLibrary("d3d8");
-			g_unloadD8 = TRUE;
-		}
-		LogWithNumber("hD3D8 = %08x", (DWORD)hD3D8);
-		if (hD3D8) { InitHooksD8(); g_D8_hooked = TRUE; }
-	}
-
-	// Direct3D9
-	if (!g_D9_hooked) 
-	{
-		Log("Checking Direct3D9 usage");
-		hD3D9 = GetModuleHandle("d3d9.dll");
-		if (!hD3D9) 
-		{
-			hD3D9 = LoadLibrary("d3d9");
-			g_unloadD9 = TRUE;
-		}
-		LogWithNumber("hD3D9 = %08x", (DWORD)hD3D9);
-		if (hD3D9) { InitHooksD9(); g_D9_hooked = TRUE; }
-	}
-
 	// OpenGL
 	if (!g_OGL_hooked) 
 	{
@@ -1090,8 +971,6 @@ void CheckAndHookModules()
 
 void VerifyImplants()
 {
-	VerifyD8();
-	VerifyD9();
 	VerifyOGL();
 }
 

@@ -2,20 +2,20 @@ BUILD INSTRUCTIONS
 ==========================================================================
 
 The Makefile (in the src folder) is intended to be used by Microsoft NMAKE 
-tool, which comes with Visual C++ 6. You will need the following 3rd-party
+tool, which comes with Visual Studio. You will need the following 3rd-party
 software to build this program:
 
-1. DirectX 9 SDK 
-(Modify the Makefile so that it points to correct location
-of the SDK on your disk. Default is \DXSDK9)
-
-2. OpenGL main header file (gl.h)
+1. OpenGL main header file (gl.h)
 (Usually is installed in Visual Studio standard location for headers.
 If not, modify the Makefile accordingly.)
 
-3. STL (Standard Template Library), which is available freely from SGI. 
-(Modify the Makefile accordingly so that it points to correct location
-on your disk. Default is \STL)
+BUILD:
+~~~~~~
+
+1. Modify setenv.cmd file - to set correct path for vsvarsall.bat
+2. Open a new command window and run setenv.cmd
+
+Ready to build now:
 
 Three types of build are supported by the current Makefile: 
 "debug", "release", and "perf".

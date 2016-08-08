@@ -37,9 +37,6 @@ void ForceReconf(void);
 void RestoreSettings(void);
 void InitializeCustomConfigs(void);
 
-BOOL GetDevice8Methods(HWND hWnd, DWORD* present, DWORD* reset);
-BOOL GetDevice9Methods(HWND hWnd, DWORD* present, DWORD* reset);
-
 /**
  * Increase the reconf-counter thus telling all the mapped DLLs that
  * they need to reconfigure themselves.
@@ -527,22 +524,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	ZeroMemory(buf, BUFLEN);
 	strncpy(buf, CREDITS, BUFLEN-1);
 	SendMessage(g_statusTextControl, WM_SETTEXT, 0, (LPARAM)buf);
-
-	// Get method pointers of IDirect3DDevice8 vtable
-	DWORD present8_addr = 0, reset8_addr = 0;
-	if (GetDevice8Methods(hWnd, &present8_addr, &reset8_addr))
-	{
-		SetPresent8(present8_addr);
-		SetReset8(reset8_addr);
-	}
-
-	// Get method pointers of IDirect3DDevice9 vtable
-	DWORD present9_addr = 0, reset9_addr = 0;
-	if (GetDevice9Methods(hWnd, &present9_addr, &reset9_addr))
-	{
-		SetPresent9(present9_addr);
-		SetReset9(reset9_addr);
-	}
 
 	// Clear the flag, so that mydll hooks on device methods
 	SetUnhookFlag(false);

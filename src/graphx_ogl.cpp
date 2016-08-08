@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "log.h"
-#include "dinp.h"
 #include "shared.h"
 #include "util.h"
 #include "imageutil.h"
@@ -643,28 +642,6 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 	// Otherwise use thread-specific keyboard hook.
 	if (!g_mystate.bKeyboardInitDone)
 	{
-		if (g_config.useDirectInput)
-		{
-			hDI = (HINSTANCE)GetModuleHandle("dinput8.dll");
-			if (!hDI) hDI = (HINSTANCE)LoadLibrary("dinput8.dll");
-			if (hDI)
-			{
-				TRACE("JuceWglSwapBuffers: KEYBOARD INIT: using DirectInput.");
-				GetDirectInputCreator();
-
-				// install dummy keyboard hook so that we don't get unmapped,
-				// when going to exclusive mode (i.e. unhooking GetMsgProc)
-				DWORD tid = GetWindowThreadProcessId(hProcWnd, NULL);
-				InstallDummyKeyboardHook(tid);
-
-				g_mystate.bKeyboardInitDone = TRUE;
-			}
-			else
-			{
-				TRACE("JuceWglSwapBuffers: KEYBOARD INIT: Unable to load dinput8.dll.");
-			}
-		}
-
 		// if we're not done at this point, use keyboard hook
 		if (!g_mystate.bKeyboardInitDone)
 		{
@@ -691,9 +668,6 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 		// keyboard configuration done
 		g_mystate.bKeyboardInitDone = TRUE;
 	}
-
-	// Process DirectInput input
-	if (g_config.useDirectInput) ProcessDirectInput(&g_config);
 
 	// process video recording toggles
 	if (g_mystate.bStartRecording)
