@@ -447,8 +447,6 @@ BOOL WriteConfig(TAXI_CONFIG* config)
 		fprintf(cfg, "vKey.screenShot = 0x%02x\n", config->vKeyScreenShot);
 	if (!bWrittenVKeyVideoCapture)
 		fprintf(cfg, "vKey.videoCapture = 0x%02x\n", config->vKeyVideoCapture);
-	if (!bWrittenUseDirectInput)
-		fprintf(cfg, "keyboard.useDirectInput = %d\n", config->useDirectInput ? "1" : "0");
 	if (!bWrittenStartupModeSystemWide)
 		fprintf(cfg, "startup.hookMode.systemWide = %d\n", config->startupModeSystemWide ? "1" : "0");
 	if (!bWrittenFullSizeVideo)
