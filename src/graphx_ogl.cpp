@@ -382,9 +382,9 @@ void DrawIndicator()
 	{
 		GlDisable(GL_TEXTURE_2D);
 	}
-    //GlBindTexture(GL_TEXTURE_2D, 0);
-    //GlDisable(GL_TEXTURE_2D);
-    //GlDisable(GL_TEXTURE_CUBE_MAP);
+	//GlBindTexture(GL_TEXTURE_2D, 0);
+	//GlDisable(GL_TEXTURE_2D);
+	//GlDisable(GL_TEXTURE_CUBE_MAP);
 
 	GlDisable(GL_DEPTH_TEST);
 	//GlDisable(GL_STENCIL_TEST);
@@ -634,7 +634,7 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 	// if haven't done yet, query for version info and extensions
 	if (!hasOpenGLInfo) GetVersionAndExtensionsInfo();
 
-    // safer to do it every time, in case windows/screen modes change
+	// safer to do it every time, in case windows/screen modes change
 	GetWindowInfoAndDims();
 
 	// determine how we are going to handle keyboard hot-keys:
@@ -672,6 +672,11 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 	// process video recording toggles
 	if (g_mystate.bStartRecording)
 	{
+		if (g_rgbBuf) HeapFree(procHeap, 0, g_rgbBuf);
+		if (g_rgbBigBuf) HeapFree(procHeap, 0, g_rgbBigBuf);
+		g_rgbBuf = NULL;
+		g_rgbBigBuf = NULL;
+
 		TRACE("JuceWglSwapBuffers: calling OpenAVIFile.");
 		videoFile = OpenAVIFile();
 		g_mystate.bStartRecording = false;
