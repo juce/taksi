@@ -855,6 +855,36 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	return TRUE;    /* ok */
 }
 
+/*******************
+ * public triggers *
+ *******************/
+
+EXTERN_C _declspec(dllexport) void TriggerScreenShot(void)
+{
+	g_mystate.bMakeScreenShot = true;
+}
+
+EXTERN_C _declspec(dllexport) void TriggerSmallScreenShot(void)
+{
+	g_mystate.bMakeSmallScreenShot = true;
+}
+
+EXTERN_C _declspec(dllexport) void TriggerVideo(void)
+{
+	switch (g_mystate.bNowRecording)
+	{
+		case FALSE:
+			// change indicator to "red"
+			g_mystate.bStartRecording = true;
+			break;
+
+		case TRUE:
+			// change indicator from "red" to previous one
+			g_mystate.bStopRecording = true;
+			break;
+	}
+}
+
 /**************************************************************** 
  * WH_KEYBOARD hook procedure                                   *
  ****************************************************************/ 

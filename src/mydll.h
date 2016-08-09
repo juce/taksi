@@ -9,11 +9,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#ifdef _COMPILING_MYDLL
 #define LIBSPEC __declspec(dllexport)
-#else
-#define LIBSPEC __declspec(dllimport)
-#endif /* _COMPILING_MYDLL */
 
 #define BUFLEN 4096  /* 4K buffer length */
 
@@ -29,6 +25,10 @@ extern "C" {
 LIBSPEC LRESULT CALLBACK CBTProc(int code, WPARAM wParam, LPARAM lParam);
 LIBSPEC LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam);
 LIBSPEC LRESULT CALLBACK DummyKeyboardProc(int code, WPARAM wParam, LPARAM lParam);
+
+LIBSPEC void TriggerScreenShot(void);
+LIBSPEC void TriggerSmallScreenShot(void);
+LIBSPEC void TriggerVideo(void);
 
 LIBSPEC BOOL InstallTheHook(void);
 LIBSPEC BOOL UninstallTheHook(void);
