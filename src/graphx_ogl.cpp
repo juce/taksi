@@ -650,6 +650,9 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 			/* install keyboard hook */
 			DWORD tid = GetWindowThreadProcessId(hProcWnd, NULL);
 			InstallKeyboardHook(tid);
+
+			/* install get-message hook */
+			InstallGetMessageHook(0);
 		}
 
 		// Goto "exclusive" mode (i.e. unhook GetMsgProc)

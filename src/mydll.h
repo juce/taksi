@@ -30,6 +30,8 @@ LIBSPEC void TriggerScreenShot(void);
 LIBSPEC void TriggerSmallScreenShot(void);
 LIBSPEC void TriggerVideo(void);
 
+LIBSPEC BOOL TakeScreenShot(DWORD processId);
+
 LIBSPEC BOOL InstallTheHook(void);
 LIBSPEC BOOL UninstallTheHook(void);
 

@@ -50,6 +50,7 @@ TAXI_CONFIG g_config = {
 	DEFAULT_CUSTOM_LIST
 };
 DXPOINTERS g_dxInfo = {0, 0, 0, 0};
+UINT sg_taksi_message = 0;
 #pragma data_seg()
 #pragma comment(linker, "/section:.HKT,rws")
 
@@ -232,6 +233,10 @@ char buf[BUFLEN];
 
 // keyboard hook handle
 HHOOK g_hKeyboardHook = NULL;
+HHOOK g_hGetMessageHook = NULL;
+
+// Message params for inter-process communication
+WPARAM TAKSI_MESSAGE_TAKE_SCREENSHOT = (WPARAM)0xA520;
 
 // back-buffer dimensions in pixels
 UINT g_bbWidth = 0;
@@ -264,6 +269,14 @@ void InstallKeyboardHook(DWORD tid)
 	LogWithNumber("Installed keyboard hook: %08x", (DWORD)g_hKeyboardHook);
 }
 
+/* install getmessage hook to all threads of this process. */
+void InstallGetMessageHook(DWORD tid)
+{
+	sg_taksi_message = RegisterWindowMessage("Taksi.0.5.2");
+	g_hGetMessageHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgProc, hInst, tid);
+	LogWithNumber("Installed get-message hook: %08x", (DWORD)g_hGetMessageHook);
+}
+
 /* remove keyboard hooks */
 void UninstallKeyboardHook(void)
 {
@@ -272,6 +285,17 @@ void UninstallKeyboardHook(void)
 		UnhookWindowsHookEx( g_hKeyboardHook );
 		LogWithNumber("Keyboard hook %08x uninstalled.", (DWORD)g_hKeyboardHook);
 		g_hKeyboardHook = NULL;
+	}
+}
+
+/* remove get-message hook */
+void UninstallGetMessageHook(void)
+{
+	if (g_hGetMessageHook != NULL)
+	{
+		UnhookWindowsHookEx( g_hGetMessageHook );
+		LogWithNumber("GetMessage hook %08x uninstalled.", (DWORD)g_hGetMessageHook);
+		g_hGetMessageHook = NULL;
 	}
 }
 
@@ -796,6 +820,9 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 				CloseAVIFile(videoFile);
 			}
 
+			/* uninstall get-message hook */
+			UninstallGetMessageHook();
+
 			/* uninstall keyboard hook */
 			UninstallKeyboardHook();
 
@@ -855,6 +882,42 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	return TRUE;    /* ok */
 }
 
+struct proc_info {
+	HWND hWnd;
+	DWORD processId;
+};
+
+BOOL CALLBACK EnumWindowsProcMy(HWND hwnd,LPARAM lParam)
+{
+	DWORD lpdwProcessId;
+	GetWindowThreadProcessId(hwnd,&lpdwProcessId);
+	struct proc_info *info = (struct proc_info *)lParam;
+	if (lpdwProcessId == info->processId)
+	{
+		info->hWnd = hwnd;
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/*********************
+ * inter-process API *
+ *********************/
+
+EXTERN_C _declspec(dllexport) BOOL TakeScreenShot(DWORD processId)
+{
+	struct proc_info info;
+	info.processId = processId;
+	info.hWnd = 0;
+	EnumWindows(EnumWindowsProcMy,&info);
+	if (!info.hWnd) {
+		Log("Unable to determine window handle for target process");
+		return FALSE;
+	}
+
+	SendMessage(info.hWnd, sg_taksi_message, TAKSI_MESSAGE_TAKE_SCREENSHOT, (LPARAM)0);
+}
+
 /*******************
  * public triggers *
  *******************/
@@ -893,6 +956,32 @@ EXTERN_C _declspec(dllexport) LRESULT CALLBACK DummyKeyboardProc(int code, WPARA
 {
     // do not process message 
 	return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam); 
+}
+
+/**************************************************************** 
+ * WH_GETMESSAGE hook procedure                                 *
+ ****************************************************************/ 
+
+EXTERN_C _declspec(dllexport) LRESULT CALLBACK GetMsgProc(int code, WPARAM wParam, LPARAM lParam)
+{
+    if (code < 0) // do not process message 
+        return CallNextHookEx(g_hGetMessageHook, code, wParam, lParam); 
+
+	if (lParam)
+	{
+		MSG *msg = (MSG *)lParam;
+		if ((msg->message & 0xffff) == sg_taksi_message)
+		{
+			/* it is a taksi message */
+			if (msg->wParam == TAKSI_MESSAGE_TAKE_SCREENSHOT)
+			{
+				Log("GetMsgProc: TAKSI_MESSAGE_TAKE_SCREENSHOT received.");
+				g_mystate.bMakeScreenShot = true;
+			}
+		}
+	}
+
+	return CallNextHookEx(g_hGetMessageHook, code, wParam, lParam); 
 }
 
 /**************************************************************** 
