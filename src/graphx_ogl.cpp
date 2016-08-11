@@ -33,6 +33,7 @@ extern BOOL g_initDone;
 
 // window handle of the process
 extern HWND hProcWnd;
+HDC g_hdc = 0;
 
 // Thread-specific keyboard hook
 extern HHOOK g_hKeyboardHook;
@@ -341,9 +342,10 @@ void HookSwapBuffers(HMODULE hMod)
 /* Determine HWND for our app window, and window dimensions. */
 void GetWindowInfoAndDims()
 {
-	if (!hProcWnd) {
-		 HDC hdc = WglGetCurrentDC();
-		 hProcWnd = WindowFromDC(hdc);
+	HDC hdc = WglGetCurrentDC();
+	if (hdc != g_hdc) {
+		g_hdc = hdc;
+		hProcWnd = WindowFromDC(hdc);
 	}
 
 	RECT rect;
