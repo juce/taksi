@@ -10,6 +10,9 @@ release:
 perf:
 	$(MAKE) EXTRA_CFLAGS="/DMYDLL_CLOCK_STATS"
 
+prog.exe: prog.obj
+	$(LINK) /out:prog.exe prog.obj
+
 taksi.exe: hook.obj win32gui.obj config.obj hook.res taksi.dll
 	$(LINK) $(LFLAGS) /out:taksi.exe hook.obj win32gui.obj config.obj taksi.lib hook.res $(LIBS)
 hook.obj: hook.cpp hook.h win32gui.h shared.h config.h 
