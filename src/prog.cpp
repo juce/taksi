@@ -2,11 +2,13 @@
 #include <stdio.h>
 
 typedef BOOL (*INSTALLTHEHOOK)(void);
+typedef BOOL (*UNINSTALLTHEHOOK)(void);
 typedef BOOL (*TAKESCREENSHOT)(DWORD);
-typedef BOOL (*SETDEBUG)(DWORD);
-typedef BOOL (*SETCAPTUREDIR)(char *);
+typedef void (*SETDEBUG)(DWORD);
+typedef void (*SETCAPTUREDIR)(char *);
 
 INSTALLTHEHOOK InstallTheHook;
+UNINSTALLTHEHOOK UninstallTheHook;
 TAKESCREENSHOT TakeScreenShot;
 SETCAPTUREDIR SetCaptureDir;
 SETDEBUG SetDebug;
@@ -26,8 +28,9 @@ int main(int argc, char **argv)
     GetCurrentDirectory(sizeof(currDir)-1, currDir);
     strcat(currDir,"\\");
 
-    HANDLE hTaksi = LoadLibrary("taksi");
+    HMODULE hTaksi = LoadLibrary("taksi");
     InstallTheHook = (INSTALLTHEHOOK)GetProcAddress(hTaksi, "InstallTheHook");
+    UninstallTheHook = (UNINSTALLTHEHOOK)GetProcAddress(hTaksi, "UninstallTheHook");
     TakeScreenShot = (TAKESCREENSHOT)GetProcAddress(hTaksi, "TakeScreenShot");
     SetCaptureDir = (SETCAPTUREDIR)GetProcAddress(hTaksi, "SetCaptureDir");
     SetDebug = (SETDEBUG)GetProcAddress(hTaksi, "SetDebug");
@@ -36,7 +39,9 @@ int main(int argc, char **argv)
     InstallTheHook();
     SetCaptureDir(currDir);
 
-    printf("Press a key to take screenshot for process %d", processId);
+    printf("Make sure your target application (pid=%d) is hooked\n", processId);
+    printf("by switching focus to it, for example, and then back here.\n");
+    printf("Then, press a key to take a screenshot");
     getchar();
 
     if (argc > 2) {
@@ -49,5 +54,6 @@ int main(int argc, char **argv)
         printf("PROBLEM taking screenshot.\n");
     }
 
+    UninstallTheHook();
     return 0;
 }
