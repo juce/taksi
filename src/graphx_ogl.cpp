@@ -341,8 +341,10 @@ void HookSwapBuffers(HMODULE hMod)
 /* Determine HWND for our app window, and window dimensions. */
 void GetWindowInfoAndDims()
 {
-	HDC hdc = WglGetCurrentDC();
-	hProcWnd = WindowFromDC(hdc);
+	if (!hProcWnd) {
+		 HDC hdc = WglGetCurrentDC();
+		 hProcWnd = WindowFromDC(hdc);
+	}
 
 	RECT rect;
 	GetClientRect(hProcWnd, &rect);
