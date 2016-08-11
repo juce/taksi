@@ -40,7 +40,9 @@ LIBSPEC BOOL UninstallTheHook(void);
 
 DWORD QPC();
 DWORD GetFrameDups();
-void InstallGetMessageHook(DWORD tid);
+bool ShouldTakeScreenshot();
+bool ShouldTakeSmallScreenshot();
+void CheckSharedToggleVideo();
 void InstallKeyboardHook(DWORD tid);
 void InstallDummyKeyboardHook(DWORD tid);
 void UninstallKeyboardHook();
@@ -54,6 +56,11 @@ typedef struct _struct_DXPOINTERS {
 	DWORD present9;
 	DWORD reset9;
 } DXPOINTERS;
+
+struct trigger_t {
+	DWORD processId;
+	DWORD flag;
+};
 
 /* ... more declarations as needed */
 #undef LIBSPEC

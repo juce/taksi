@@ -654,9 +654,6 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 			/* install keyboard hook */
 			DWORD tid = GetWindowThreadProcessId(hProcWnd, NULL);
 			InstallKeyboardHook(tid);
-
-			/* install get-message hook */
-			InstallGetMessageHook(0);
 		}
 
 		// Goto "exclusive" mode (i.e. unhook GetMsgProc)
@@ -675,6 +672,8 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 		// keyboard configuration done
 		g_mystate.bKeyboardInitDone = TRUE;
 	}
+
+	CheckSharedToggleVideo();
 
 	// process video recording toggles
 	if (g_mystate.bStartRecording)
@@ -701,7 +700,7 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 	}
 
 	/* make screen shot, if requested so. */
-	else if (g_mystate.bMakeScreenShot)
+	else if (ShouldTakeScreenshot()) 
 	{
 		// allocate buffer for pixel data
 		INT bytes = g_bbWidth * 3;
@@ -720,7 +719,7 @@ __declspec(dllexport) BOOL APIENTRY JuceWglSwapBuffers(HDC  hdc)
 	}
 
 	/* make small screen shot, if requested so. */
-	else if (g_mystate.bMakeSmallScreenShot)
+	else if (ShouldTakeSmallScreenshot())
 	{
 		// allocate buffer for pixel data
 		INT bytes = g_bbWidth * 3;

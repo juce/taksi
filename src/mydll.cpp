@@ -50,13 +50,17 @@ TAXI_CONFIG g_config = {
 	DEFAULT_CUSTOM_LIST
 };
 DXPOINTERS g_dxInfo = {0, 0, 0, 0};
-UINT sg_taksi_message = 0;
+struct trigger_t sg_take_screenshot = { 0, 0 };
+struct trigger_t sg_take_small_screenshot = { 0, 0 };
+struct trigger_t sg_toggle_video = { 0, 0 };
 #pragma data_seg()
 #pragma comment(linker, "/section:.HKT,rws")
 
 /************************** 
 End of shared section 
 **************************/
+
+DWORD g_processId = 0xffffffff;
 
 DWORD* g_pLoadLibraryPtr = NULL;
 DWORD g_msgCount = 0;
@@ -233,7 +237,6 @@ char buf[BUFLEN];
 
 // keyboard hook handle
 HHOOK g_hKeyboardHook = NULL;
-HHOOK g_hGetMessageHook = NULL;
 
 // Message params for inter-process communication
 WPARAM TAKSI_MESSAGE_TAKE_SCREENSHOT = (WPARAM)0xA520;
@@ -271,15 +274,6 @@ void InstallKeyboardHook(DWORD tid)
 	LogWithNumber("Installed keyboard hook: %08x", (DWORD)g_hKeyboardHook);
 }
 
-/* install getmessage hook to all threads of this process. */
-void InstallGetMessageHook(DWORD tid)
-{
-	sg_taksi_message = RegisterWindowMessage("Taksi.0.5.2");
-	g_hGetMessageHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgProc, hInst, tid);
-	LogWithNumber("Installed get-message hook: %08x", (DWORD)g_hGetMessageHook);
-	LogWithNumber("sg_taksi_message: %08x", sg_taksi_message);
-}
-
 /* remove keyboard hooks */
 void UninstallKeyboardHook(void)
 {
@@ -288,17 +282,6 @@ void UninstallKeyboardHook(void)
 		UnhookWindowsHookEx( g_hKeyboardHook );
 		LogWithNumber("Keyboard hook %08x uninstalled.", (DWORD)g_hKeyboardHook);
 		g_hKeyboardHook = NULL;
-	}
-}
-
-/* remove get-message hook */
-void UninstallGetMessageHook(void)
-{
-	if (g_hGetMessageHook != NULL)
-	{
-		UnhookWindowsHookEx( g_hGetMessageHook );
-		LogWithNumber("GetMessage hook %08x uninstalled.", (DWORD)g_hGetMessageHook);
-		g_hGetMessageHook = NULL;
 	}
 }
 
@@ -808,6 +791,9 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 
 		// see if any of supported API DLLs are already loaded.
 		if (!g_ignoreAllMessages) CheckAndHookModules();
+
+		// remember process id
+		g_processId = GetCurrentProcessId();
 	}
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
@@ -822,9 +808,6 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 				Log("Recording stopped. (DLL is being unmapped).");
 				CloseAVIFile(videoFile);
 			}
-
-			/* uninstall get-message hook */
-			UninstallGetMessageHook();
 
 			/* uninstall keyboard hook */
 			UninstallKeyboardHook();
@@ -909,59 +892,69 @@ BOOL CALLBACK EnumWindowsProcMy(HWND hwnd,LPARAM lParam)
 
 EXTERN_C _declspec(dllexport) BOOL TakeScreenShot(DWORD processId)
 {
-	struct proc_info info;
-	info.processId = processId;
-	info.hWnd = 0;
-	if (processId != 0) {
-		EnumWindows(EnumWindowsProcMy,(LPARAM)&info);
-		if (!info.hWnd) {
-			Log("Unable to determine window handle for target process");
-			return FALSE;
-		}
-	} else {
-		info.hWnd = HWND_BROADCAST;
-	}
-
-	PostMessage(info.hWnd, sg_taksi_message, TAKSI_MESSAGE_TAKE_SCREENSHOT, (LPARAM)0);
+	sg_take_screenshot.processId = processId;
+	sg_take_screenshot.flag = 1;
 	return TRUE;
 }
 
 EXTERN_C _declspec(dllexport) BOOL TakeSmallScreenShot(DWORD processId)
 {
-	struct proc_info info;
-	info.processId = processId;
-	info.hWnd = 0;
-	if (processId != 0) {
-		EnumWindows(EnumWindowsProcMy,(LPARAM)&info);
-		if (!info.hWnd) {
-			Log("Unable to determine window handle for target process");
-			return FALSE;
-		}
-	} else {
-		info.hWnd = HWND_BROADCAST;
-	}
-
-	PostMessage(info.hWnd, sg_taksi_message, TAKSI_MESSAGE_TAKE_SMALL_SCREENSHOT, (LPARAM)0);
+	sg_take_small_screenshot.processId = processId;
+	sg_take_small_screenshot.flag = 1;
 	return TRUE;
 }
 
 EXTERN_C _declspec(dllexport) BOOL ToggleVideo(DWORD processId)
 {
-	struct proc_info info;
-	info.processId = processId;
-	info.hWnd = 0;
-	if (processId != 0) {
-		EnumWindows(EnumWindowsProcMy,(LPARAM)&info);
-		if (!info.hWnd) {
-			Log("Unable to determine window handle for target process");
-			return FALSE;
-		}
-	} else {
-		info.hWnd = HWND_BROADCAST;
-	}
-
-	PostMessage(info.hWnd, sg_taksi_message, TAKSI_MESSAGE_TOGGLE_VIDEO, (LPARAM)0);
+	sg_toggle_video.processId = processId;
+	sg_toggle_video.flag = 1;
 	return TRUE;
+}
+
+bool ShouldTakeScreenshot()
+{
+	bool res = sg_take_screenshot.flag && 
+		sg_take_screenshot.processId == g_processId;
+	if (res) {
+		sg_take_screenshot.flag = 0;
+		sg_take_screenshot.processId = 0;
+	}
+	res = res || g_mystate.bMakeScreenShot;
+	return res;
+}
+
+bool ShouldTakeSmallScreenshot()
+{
+	bool res = sg_take_small_screenshot.flag && 
+		sg_take_small_screenshot.processId == g_processId;
+	if (res) {
+		sg_take_small_screenshot.flag = 0;
+		sg_take_small_screenshot.processId = 0;
+	}
+	res = res || g_mystate.bMakeSmallScreenShot;
+	return res;
+}
+
+void CheckSharedToggleVideo()
+{
+	bool res = sg_toggle_video.flag &&
+		sg_toggle_video.processId == g_processId;
+	if (res) {
+		sg_toggle_video.flag = 0;
+		sg_toggle_video.processId = 0;
+		switch (g_mystate.bNowRecording)
+		{
+			case FALSE:
+				// change indicator to "red"
+				g_mystate.bStartRecording = true;
+				break;
+
+			case TRUE:
+				// change indicator from "red" to previous one
+				g_mystate.bStopRecording = true;
+				break;
+		}
+	}
 }
 
 /*******************
@@ -1002,39 +995,6 @@ EXTERN_C _declspec(dllexport) LRESULT CALLBACK DummyKeyboardProc(int code, WPARA
 {
     // do not process message 
 	return CallNextHookEx(g_hKeyboardHook, code, wParam, lParam); 
-}
-
-/**************************************************************** 
- * WH_GETMESSAGE hook procedure                                 *
- ****************************************************************/ 
-
-EXTERN_C LRESULT CALLBACK GetMsgProc(int code, WPARAM wParam, LPARAM lParam)
-{
-	if (code < 0) // do not process message 
-		return CallNextHookEx(g_hGetMessageHook, code, wParam, lParam); 
-
-	if (lParam)
-	{
-		MSG *msg = (MSG *)lParam;
-		if ((msg->message & 0x0000ffff) == sg_taksi_message)
-		{
-			/* it is a taksi message */
-			if (msg->wParam == TAKSI_MESSAGE_TAKE_SCREENSHOT) {
-				Log("GetMsgProc: TAKSI_MESSAGE_TAKE_SCREENSHOT received.");
-				TriggerScreenShot();
-			}
-			else if (msg->wParam == TAKSI_MESSAGE_TAKE_SMALL_SCREENSHOT) {
-				Log("GetMsgProc: TAKSI_MESSAGE_TAKE_SMALL_SCREENSHOT received.");
-				TriggerSmallScreenShot();
-			}
-			else if (msg->wParam == TAKSI_MESSAGE_TOGGLE_VIDEO) {
-				Log("GetMsgProc: TAKSI_MESSAGE_TAKE_SMALL_SCREENSHOT received.");
-				TriggerVideo();
-			}
-		}
-	}
-
-	return CallNextHookEx(g_hGetMessageHook, code, wParam, lParam); 
 }
 
 /**************************************************************** 
