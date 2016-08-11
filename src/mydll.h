@@ -25,21 +25,26 @@ extern "C" {
 LIBSPEC LRESULT CALLBACK CBTProc(int code, WPARAM wParam, LPARAM lParam);
 LIBSPEC LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam);
 LIBSPEC LRESULT CALLBACK DummyKeyboardProc(int code, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK GetMsgProc(int code, WPARAM wParam, LPARAM lParam);
 
 LIBSPEC void TriggerScreenShot(void);
 LIBSPEC void TriggerSmallScreenShot(void);
 LIBSPEC void TriggerVideo(void);
 
 LIBSPEC BOOL TakeScreenShot(DWORD processId);
+LIBSPEC BOOL TakeSmallScreenShot(DWORD processId);
+LIBSPEC BOOL ToggleVideo(DWORD processId);
 
 LIBSPEC BOOL InstallTheHook(void);
 LIBSPEC BOOL UninstallTheHook(void);
 
 DWORD QPC();
 DWORD GetFrameDups();
+void InstallGetMessageHook(DWORD tid);
 void InstallKeyboardHook(DWORD tid);
 void InstallDummyKeyboardHook(DWORD tid);
 void UninstallKeyboardHook();
+void UninstallGetMessageHook();
 
 typedef enum { CUSTOM, ADAPTIVE } ALGORITHM_TYPE;
 
